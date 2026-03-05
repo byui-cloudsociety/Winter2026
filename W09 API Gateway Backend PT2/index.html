@@ -1,0 +1,930 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>W09 — File Management API Lab</title>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      :root {
+        --bg: #0f1117;
+        --surface: #1a1d27;
+        --surface2: #22263a;
+        --border: #2e334d;
+        --accent: #6c63ff;
+        --accent-hover: #857dff;
+        --green: #22c55e;
+        --red: #ef4444;
+        --yellow: #f59e0b;
+        --text: #e2e8f0;
+        --muted: #8892a4;
+        --radius: 10px;
+        --font: "Segoe UI", system-ui, sans-serif;
+      }
+
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--font);
+        min-height: 100vh;
+        padding: 2rem 1rem 4rem;
+      }
+
+      header {
+        text-align: center;
+        margin-bottom: 2.5rem;
+      }
+
+      header .badge {
+        display: inline-block;
+        background: var(--accent);
+        color: #fff;
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        padding: 0.25rem 0.75rem;
+        border-radius: 999px;
+        margin-bottom: 0.75rem;
+      }
+
+      header h1 {
+        font-size: 2rem;
+        font-weight: 700;
+        line-height: 1.2;
+      }
+
+      header p {
+        color: var(--muted);
+        margin-top: 0.5rem;
+        font-size: 0.95rem;
+      }
+
+      .container {
+        max-width: 760px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+      }
+
+      /* URL Bar */
+      .url-bar {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 1.25rem 1.5rem;
+      }
+
+      .url-bar label {
+        display: block;
+        font-size: 0.8rem;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 0.6rem;
+      }
+
+      .url-input-row {
+        display: flex;
+        gap: 0.5rem;
+      }
+
+      .url-input-row input {
+        flex: 1;
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        color: var(--text);
+        border-radius: 6px;
+        padding: 0.6rem 0.9rem;
+        font-size: 0.9rem;
+        font-family: var(--font);
+        outline: none;
+        transition: border-color 0.2s;
+      }
+
+      .url-input-row input:focus {
+        border-color: var(--accent);
+      }
+
+      .url-status {
+        margin-top: 0.6rem;
+        font-size: 0.82rem;
+        color: var(--muted);
+        min-height: 1.1em;
+      }
+
+      .url-status.ok {
+        color: var(--green);
+      }
+      .url-status.err {
+        color: var(--red);
+      }
+
+      /* Cards */
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        overflow: hidden;
+      }
+
+      .card-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid var(--border);
+        background: var(--surface2);
+      }
+
+      .card-header .icon {
+        width: 34px;
+        height: 34px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        flex-shrink: 0;
+      }
+
+      .icon-upload {
+        background: rgba(108, 99, 255, 0.18);
+      }
+      .icon-list {
+        background: rgba(34, 197, 94, 0.15);
+      }
+      .icon-download {
+        background: rgba(245, 158, 11, 0.15);
+      }
+
+      .card-header h2 {
+        font-size: 1rem;
+        font-weight: 600;
+      }
+
+      .card-header .method {
+        margin-left: auto;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        padding: 0.2rem 0.55rem;
+        border-radius: 4px;
+      }
+
+      .method-post {
+        background: rgba(108, 99, 255, 0.25);
+        color: #a29bff;
+      }
+      .method-get {
+        background: rgba(34, 197, 94, 0.2);
+        color: #4ade80;
+      }
+
+      .card-body {
+        padding: 1.25rem 1.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      /* Form elements */
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+      }
+
+      .field label {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+      }
+
+      .field input[type="text"],
+      .field input[type="file"] {
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        color: var(--text);
+        border-radius: 6px;
+        padding: 0.6rem 0.9rem;
+        font-size: 0.9rem;
+        font-family: var(--font);
+        outline: none;
+        transition: border-color 0.2s;
+        width: 100%;
+      }
+
+      .field input[type="text"]:focus {
+        border-color: var(--accent);
+      }
+
+      .field input[type="file"] {
+        cursor: pointer;
+        padding: 0.5rem 0.75rem;
+      }
+
+      .field input[type="file"]::file-selector-button {
+        background: var(--accent);
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        padding: 0.3rem 0.75rem;
+        cursor: pointer;
+        font-size: 0.82rem;
+        margin-right: 0.75rem;
+        transition: background 0.2s;
+      }
+
+      .field input[type="file"]::file-selector-button:hover {
+        background: var(--accent-hover);
+      }
+
+      .file-info {
+        font-size: 0.8rem;
+        color: var(--muted);
+      }
+
+      /* Buttons */
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.4rem;
+        border: none;
+        border-radius: 7px;
+        padding: 0.65rem 1.25rem;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition:
+          background 0.2s,
+          opacity 0.2s;
+        font-family: var(--font);
+      }
+
+      .btn:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+
+      .btn-primary {
+        background: var(--accent);
+        color: #fff;
+      }
+      .btn-primary:hover:not(:disabled) {
+        background: var(--accent-hover);
+      }
+
+      .btn-success {
+        background: var(--green);
+        color: #fff;
+      }
+      .btn-success:hover:not(:disabled) {
+        background: #16a34a;
+      }
+
+      .btn-warning {
+        background: var(--yellow);
+        color: #000;
+      }
+      .btn-warning:hover:not(:disabled) {
+        background: #d97706;
+      }
+
+      .btn-ghost {
+        background: var(--surface2);
+        color: var(--text);
+        border: 1px solid var(--border);
+      }
+      .btn-ghost:hover:not(:disabled) {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+
+      /* Response box */
+      .response-box {
+        background: #0a0c14;
+        border: 1px solid var(--border);
+        border-radius: 7px;
+        padding: 1rem;
+        font-size: 0.82rem;
+        font-family: "Cascadia Code", "Fira Code", "Courier New", monospace;
+        white-space: pre-wrap;
+        word-break: break-all;
+        min-height: 60px;
+        max-height: 280px;
+        overflow-y: auto;
+        line-height: 1.55;
+        color: var(--muted);
+      }
+
+      .response-box.success {
+        color: var(--green);
+        border-color: rgba(34, 197, 94, 0.35);
+      }
+      .response-box.error {
+        color: var(--red);
+        border-color: rgba(239, 68, 68, 0.35);
+      }
+      .response-box.info {
+        color: #93c5fd;
+        border-color: rgba(147, 197, 253, 0.3);
+      }
+
+      /* File list table */
+      .file-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.85rem;
+      }
+
+      .file-table th {
+        text-align: left;
+        padding: 0.55rem 0.75rem;
+        color: var(--muted);
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.72rem;
+        letter-spacing: 0.07em;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .file-table td {
+        padding: 0.6rem 0.75rem;
+        border-bottom: 1px solid var(--border);
+        vertical-align: middle;
+      }
+
+      .file-table tr:last-child td {
+        border-bottom: none;
+      }
+
+      .file-table tr:hover td {
+        background: var(--surface2);
+      }
+
+      .file-table .filename-cell {
+        font-family: "Cascadia Code", monospace;
+        color: #a29bff;
+        word-break: break-all;
+      }
+
+      .file-table .size-cell {
+        color: var(--muted);
+        white-space: nowrap;
+      }
+      .file-table .date-cell {
+        color: var(--muted);
+        white-space: nowrap;
+        font-size: 0.78rem;
+      }
+
+      .dl-btn {
+        background: none;
+        border: 1px solid var(--border);
+        color: var(--yellow);
+        border-radius: 5px;
+        padding: 0.25rem 0.6rem;
+        font-size: 0.78rem;
+        cursor: pointer;
+        font-family: var(--font);
+        transition:
+          border-color 0.2s,
+          background 0.2s;
+      }
+      .dl-btn:hover {
+        border-color: var(--yellow);
+        background: rgba(245, 158, 11, 0.1);
+      }
+
+      .empty-state {
+        text-align: center;
+        padding: 1.5rem;
+        color: var(--muted);
+        font-size: 0.88rem;
+      }
+
+      /* Spinner */
+      .spinner {
+        display: inline-block;
+        width: 14px;
+        height: 14px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-top-color: #fff;
+        border-radius: 50%;
+        animation: spin 0.7s linear infinite;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* Download preview */
+      .download-preview {
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: 7px;
+        padding: 1rem;
+        display: none;
+      }
+
+      .download-preview.show {
+        display: block;
+      }
+
+      .preview-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 0.75rem;
+      }
+
+      .meta-pill {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 5px;
+        padding: 0.2rem 0.6rem;
+        font-size: 0.78rem;
+        color: var(--muted);
+      }
+
+      .meta-pill span {
+        color: var(--text);
+        font-weight: 600;
+      }
+
+      footer {
+        text-align: center;
+        margin-top: 3rem;
+        color: var(--muted);
+        font-size: 0.8rem;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="badge">Week 09 Lab</div>
+      <h1>File Management API</h1>
+      <p>
+        DynamoDB &amp; Lambda via API Gateway &mdash; paste your Invoke URL
+        below to get started
+      </p>
+    </header>
+
+    <div class="container">
+      <!-- URL Bar -->
+      <div class="url-bar">
+        <label>API Gateway Invoke URL</label>
+        <div class="url-input-row">
+          <input
+            id="invokeUrl"
+            type="text"
+            placeholder="https://xxxxxxxxxx.execute-api.us-east-1.amazonaws.com/prod"
+            spellcheck="false"
+            autocomplete="off"
+          />
+          <button class="btn btn-ghost" onclick="saveUrl()">Save</button>
+        </div>
+        <div class="url-status" id="urlStatus">
+          Paste your Invoke URL and click Save.
+        </div>
+      </div>
+
+      <!-- Upload -->
+      <div class="card">
+        <div class="card-header">
+          <div class="icon icon-upload">📤</div>
+          <h2>Upload File</h2>
+          <span class="method method-post">POST /upload</span>
+        </div>
+        <div class="card-body">
+          <div class="field">
+            <label>Select File</label>
+            <input type="file" id="fileInput" onchange="onFileSelected()" />
+            <div class="file-info" id="fileInfo">No file selected</div>
+          </div>
+          <div style="display: flex; gap: 0.5rem; align-items: center">
+            <button
+              class="btn btn-primary"
+              id="uploadBtn"
+              onclick="uploadFile()"
+              disabled
+            >
+              Upload
+            </button>
+            <span id="uploadSpinner" style="display: none"
+              ><span class="spinner"></span
+            ></span>
+          </div>
+          <div class="response-box" id="uploadResponse">
+            Response will appear here…
+          </div>
+        </div>
+      </div>
+
+      <!-- List Files -->
+      <div class="card">
+        <div class="card-header">
+          <div class="icon icon-list">📋</div>
+          <h2>List Files</h2>
+          <span class="method method-get">GET /files</span>
+        </div>
+        <div class="card-body">
+          <div style="display: flex; gap: 0.5rem; align-items: center">
+            <button
+              class="btn btn-success"
+              id="listBtn"
+              onclick="listFiles()"
+              disabled
+            >
+              Refresh File List
+            </button>
+            <span id="listSpinner" style="display: none"
+              ><span class="spinner"></span
+            ></span>
+          </div>
+          <div id="fileListContainer">
+            <div class="empty-state">
+              Click "Refresh File List" to load files from your API.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Download -->
+      <div class="card">
+        <div class="card-header">
+          <div class="icon icon-download">📥</div>
+          <h2>Download File</h2>
+          <span class="method method-get">GET /download/{filename}</span>
+        </div>
+        <div class="card-body">
+          <div class="field">
+            <label>Filename</label>
+            <input
+              type="text"
+              id="downloadFilename"
+              placeholder="example.txt"
+              spellcheck="false"
+              autocomplete="off"
+            />
+          </div>
+          <div style="display: flex; gap: 0.5rem; align-items: center">
+            <button
+              class="btn btn-warning"
+              id="downloadBtn"
+              onclick="downloadFile()"
+              disabled
+            >
+              Fetch File
+            </button>
+            <span id="downloadSpinner" style="display: none"
+              ><span class="spinner"></span
+            ></span>
+          </div>
+
+          <div class="download-preview" id="downloadPreview">
+            <div class="preview-meta" id="previewMeta"></div>
+            <button
+              class="btn btn-ghost"
+              style="font-size: 0.82rem; padding: 0.4rem 0.9rem"
+              onclick="saveDownloadedFile()"
+            >
+              💾 Save to Disk
+            </button>
+          </div>
+
+          <div class="response-box" id="downloadResponse">
+            Response will appear here…
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer>Week 09 &mdash; File Management with DynamoDB &amp; Lambda</footer>
+
+    <script>
+      let BASE_URL = "";
+      let lastDownloadedItem = null;
+
+      // ── URL ──────────────────────────────────────────────────────────
+      function saveUrl() {
+        const raw = document
+          .getElementById("invokeUrl")
+          .value.trim()
+          .replace(/\/$/, "");
+        const status = document.getElementById("urlStatus");
+
+        if (!raw.startsWith("https://")) {
+          status.textContent = "⚠ URL must start with https://";
+          status.className = "url-status err";
+          return;
+        }
+
+        BASE_URL = raw;
+        status.textContent = "✓ URL saved: " + BASE_URL;
+        status.className = "url-status ok";
+
+        // Enable buttons
+        ["uploadBtn", "listBtn", "downloadBtn"].forEach((id) => {
+          document.getElementById(id).disabled = false;
+        });
+      }
+
+      // Allow pressing Enter in the URL field
+      document.getElementById("invokeUrl").addEventListener("keydown", (e) => {
+        if (e.key === "Enter") saveUrl();
+      });
+
+      // ── Upload ───────────────────────────────────────────────────────
+      function onFileSelected() {
+        const file = document.getElementById("fileInput").files[0];
+        const info = document.getElementById("fileInfo");
+        if (file) {
+          info.textContent = `${file.name} — ${formatBytes(file.size)}`;
+        } else {
+          info.textContent = "No file selected";
+        }
+      }
+
+      async function uploadFile() {
+        if (!BASE_URL) return;
+        const fileInput = document.getElementById("fileInput");
+        const file = fileInput.files[0];
+        if (!file) {
+          setResponse("uploadResponse", "error", "Please select a file first.");
+          return;
+        }
+
+        const btn = document.getElementById("uploadBtn");
+        const spinner = document.getElementById("uploadSpinner");
+        btn.disabled = true;
+        spinner.style.display = "inline-block";
+
+        try {
+          const b64 = await fileToBase64(file);
+          const payload = { filename: file.name, content: b64 };
+
+          const res = await fetch(`${BASE_URL}/upload`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+
+          const data = await res.json();
+          if (res.ok) {
+            setResponse(
+              "uploadResponse",
+              "success",
+              JSON.stringify(data, null, 2),
+            );
+            // Auto-refresh file list if user has used it before
+            if (
+              document
+                .getElementById("fileListContainer")
+                .querySelector("table")
+            ) {
+              listFiles();
+            }
+          } else {
+            setResponse(
+              "uploadResponse",
+              "error",
+              JSON.stringify(data, null, 2),
+            );
+          }
+        } catch (err) {
+          setResponse(
+            "uploadResponse",
+            "error",
+            "Request failed: " + err.message,
+          );
+        } finally {
+          btn.disabled = false;
+          spinner.style.display = "none";
+        }
+      }
+
+      // ── List ─────────────────────────────────────────────────────────
+      async function listFiles() {
+        if (!BASE_URL) return;
+
+        const btn = document.getElementById("listBtn");
+        const spinner = document.getElementById("listSpinner");
+        btn.disabled = true;
+        spinner.style.display = "inline-block";
+
+        try {
+          const res = await fetch(`${BASE_URL}/files`);
+          const data = await res.json();
+
+          if (!res.ok) {
+            document.getElementById("fileListContainer").innerHTML =
+              `<div class="empty-state" style="color:var(--red)">Error ${res.status}: ${data.error || "Unknown error"}</div>`;
+            return;
+          }
+
+          const files = data.files || [];
+          if (files.length === 0) {
+            document.getElementById("fileListContainer").innerHTML =
+              `<div class="empty-state">No files stored yet. Upload a file to get started!</div>`;
+            return;
+          }
+
+          const rows = files
+            .map(
+              (f) => `
+        <tr>
+          <td class="filename-cell">${escHtml(f.filename)}</td>
+          <td class="size-cell">${formatBytes(f.size || 0)}</td>
+          <td class="date-cell">${f.uploaded_at ? new Date(f.uploaded_at).toLocaleString() : "—"}</td>
+          <td>
+            <button class="dl-btn" onclick="fetchFileByName(${JSON.stringify(f.filename)})">
+              Download
+            </button>
+          </td>
+        </tr>`,
+            )
+            .join("");
+
+          document.getElementById("fileListContainer").innerHTML = `
+        <table class="file-table">
+          <thead>
+            <tr>
+              <th>Filename</th>
+              <th>Size</th>
+              <th>Uploaded</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>`;
+        } catch (err) {
+          document.getElementById("fileListContainer").innerHTML =
+            `<div class="empty-state" style="color:var(--red)">Request failed: ${escHtml(err.message)}</div>`;
+        } finally {
+          btn.disabled = false;
+          spinner.style.display = "none";
+        }
+      }
+
+      // ── Download ─────────────────────────────────────────────────────
+      function fetchFileByName(filename) {
+        document.getElementById("downloadFilename").value = filename;
+        downloadFile();
+        document
+          .getElementById("downloadBtn")
+          .scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+
+      async function downloadFile() {
+        if (!BASE_URL) return;
+        const filename = document
+          .getElementById("downloadFilename")
+          .value.trim();
+        if (!filename) {
+          setResponse("downloadResponse", "error", "Please enter a filename.");
+          return;
+        }
+
+        const btn = document.getElementById("downloadBtn");
+        const spinner = document.getElementById("downloadSpinner");
+        btn.disabled = true;
+        spinner.style.display = "inline-block";
+        lastDownloadedItem = null;
+        document.getElementById("downloadPreview").classList.remove("show");
+
+        try {
+          const res = await fetch(
+            `${BASE_URL}/download/${encodeURIComponent(filename)}`,
+          );
+          const data = await res.json();
+
+          if (!res.ok) {
+            setResponse(
+              "downloadResponse",
+              "error",
+              JSON.stringify(data, null, 2),
+            );
+            return;
+          }
+
+          lastDownloadedItem = data;
+
+          // Build meta pills
+          const meta = document.getElementById("previewMeta");
+          meta.innerHTML = `
+        <div class="meta-pill">Filename: <span>${escHtml(data.filename)}</span></div>
+        <div class="meta-pill">Size: <span>${formatBytes(data.size || 0)}</span></div>
+        <div class="meta-pill">Type: <span>${escHtml(data.content_type || "unknown")}</span></div>
+        ${data.uploaded_at ? `<div class="meta-pill">Uploaded: <span>${new Date(data.uploaded_at).toLocaleString()}</span></div>` : ""}
+      `;
+          document.getElementById("downloadPreview").classList.add("show");
+
+          // Show a truncated response summary
+          const summary = {
+            filename: data.filename,
+            size: data.size,
+            content_type: data.content_type,
+            uploaded_at: data.uploaded_at,
+            content: data.content
+              ? data.content.substring(0, 60) +
+                (data.content.length > 60 ? "…(truncated)" : "")
+              : "",
+          };
+          setResponse(
+            "downloadResponse",
+            "success",
+            JSON.stringify(summary, null, 2),
+          );
+        } catch (err) {
+          setResponse(
+            "downloadResponse",
+            "error",
+            "Request failed: " + err.message,
+          );
+        } finally {
+          btn.disabled = false;
+          spinner.style.display = "none";
+        }
+      }
+
+      function saveDownloadedFile() {
+        if (!lastDownloadedItem || !lastDownloadedItem.content) return;
+        try {
+          const bytes = base64ToUint8Array(lastDownloadedItem.content);
+          const blob = new Blob([bytes], {
+            type: lastDownloadedItem.content_type || "application/octet-stream",
+          });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = lastDownloadedItem.filename;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          URL.revokeObjectURL(url);
+        } catch (err) {
+          alert("Could not decode file: " + err.message);
+        }
+      }
+
+      // ── Helpers ──────────────────────────────────────────────────────
+      function fileToBase64(file) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            // result is "data:<type>;base64,<b64>" — strip the prefix
+            const b64 = reader.result.split(",")[1];
+            resolve(b64);
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+      }
+
+      function base64ToUint8Array(b64) {
+        const binary = atob(b64);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+        return bytes;
+      }
+
+      function formatBytes(bytes) {
+        if (bytes === 0) return "0 B";
+        const k = 1024;
+        const sizes = ["B", "KB", "MB"];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
+      }
+
+      function escHtml(str) {
+        return String(str)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      function setResponse(elementId, type, text) {
+        const el = document.getElementById(elementId);
+        el.className = "response-box " + type;
+        el.textContent = text;
+      }
+    </script>
+  </body>
+</html>
